@@ -1,0 +1,638 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GitHub Profile Analyzer</title>
+  <style>
+    :root{
+      --bg: #0b1020;
+      --panel: rgba(255,255,255,0.06);
+      --text: rgba(255,255,255,0.92);
+      --muted: rgba(255,255,255,0.72);
+      --muted2: rgba(255,255,255,0.55);
+      --border: rgba(255,255,255,0.12);
+      --shadow: 0 18px 40px rgba(0,0,0,0.35);
+      --radius: 18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    }
+    *{ box-sizing: border-box; }
+    body{
+      margin:0;
+      font-family: var(--sans);
+      color: var(--text);
+      background:
+        radial-gradient(1200px 600px at 20% -10%, rgba(110,168,254,0.25), transparent 55%),
+        radial-gradient(900px 500px at 90% 0%, rgba(177,151,252,0.22), transparent 50%),
+        radial-gradient(1200px 900px at 30% 120%, rgba(48,209,88,0.12), transparent 55%),
+        var(--bg);
+      min-height: 100vh;
+    }
+    .wrap{ max-width: 1120px; margin: 0 auto; padding: 28px 18px 56px; }
+    header{ display:flex; gap: 14px; align-items:flex-start; justify-content: space-between; flex-wrap: wrap; margin-bottom: 18px; }
+    .brand{ display:flex; flex-direction: column; gap: 6px; }
+    .brand h1{ font-size: 22px; margin:0; letter-spacing: 0.2px; }
+    .brand p{ margin:0; color: var(--muted); font-size: 13px; line-height: 1.35; }
+
+    .panel{ background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); backdrop-filter: blur(14px); }
+    .search{ padding: 14px; display:flex; gap: 10px; align-items:center; flex: 1 1 520px; min-width: 280px; }
+    .search input{
+      width:100%; padding: 12px 12px; border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(0,0,0,0.28); color: var(--text);
+      outline: none; font-size: 14px;
+    }
+    .search input::placeholder{ color: rgba(255,255,255,0.5); }
+    .btn{
+      padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.18);
+      background: linear-gradient(180deg, rgba(110,168,254,0.35), rgba(110,168,254,0.20));
+      color: var(--text); cursor:pointer; font-weight: 600; font-size: 14px; white-space: nowrap;
+    }
+    .btn:disabled{ opacity:0.65; cursor:not-allowed; }
+    .btn.secondary{ background: rgba(255,255,255,0.07); }
+
+    .grid{ display:grid; grid-template-columns: 1.1fr 0.9fr; gap: 14px; margin-top: 14px; }
+    @media (max-width: 920px){ .grid{ grid-template-columns: 1fr; } }
+
+    .card{ padding: 16px; }
+    .card h2{ font-size: 14px; margin: 0 0 10px 0; color: var(--muted); font-weight: 650; letter-spacing: 0.2px; text-transform: uppercase; }
+
+    .profile{ display:flex; gap: 14px; align-items: center; margin-bottom: 12px; }
+    .avatar{ width: 54px; height: 54px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.18); background: rgba(0,0,0,0.2); overflow:hidden; flex: 0 0 auto; }
+    .avatar img{ width:100%; height:100%; object-fit: cover; }
+
+    .meta{ display:flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .name{ display:flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+    .name strong{ font-size: 16px; line-height: 1.2; }
+
+    .pill{
+      display:inline-flex; align-items:center; gap: 6px; padding: 5px 9px;
+      border-radius: 999px; border: 1px solid rgba(255,255,255,0.16);
+      background: rgba(255,255,255,0.06); color: var(--muted); font-size: 12px; white-space: nowrap;
+    }
+
+    .bio{
+      color: var(--muted); font-size: 13px; line-height: 1.35;
+      overflow:hidden; text-overflow: ellipsis; display: -webkit-box;
+      -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+    }
+
+    .kpi{ display:grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px; }
+    @media (max-width: 720px){ .kpi{ grid-template-columns: repeat(2, 1fr); } }
+    .tile{ padding: 12px; border-radius: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.10); }
+    .tile .label{ color: var(--muted2); font-size: 12px; margin-bottom: 6px; }
+    .tile .value{ font-family: var(--mono); font-size: 16px; letter-spacing: 0.2px; }
+
+    .gauge{ display:flex; gap: 12px; align-items:center; }
+    .ring{
+      width: 78px; height: 78px; border-radius: 50%;
+      background: conic-gradient(rgba(110,168,254,0.95) 0deg, rgba(110,168,254,0.95) 0deg, rgba(255,255,255,0.10) 0deg 360deg);
+      display:grid; place-items:center; border: 1px solid rgba(255,255,255,0.12); flex: 0 0 auto;
+    }
+    .inner{
+      width: 62px; height: 62px; border-radius: 50%;
+      background: rgba(0,0,0,0.38); border: 1px solid rgba(255,255,255,0.12);
+      display:flex; flex-direction: column; align-items:center; justify-content:center; gap: 2px;
+    }
+    .num{ font-family: var(--mono); font-size: 16px; font-weight: 700; line-height: 1; }
+    .sub{ font-size: 11px; color: var(--muted2); line-height: 1; }
+
+    .bars .bar{ margin-top: 10px; }
+    .bars .top{ display:flex; justify-content: space-between; gap: 10px; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+    .track{ height: 9px; border-radius: 999px; background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.10); overflow:hidden; }
+    .fill{ height: 100%; width: 0%; background: linear-gradient(90deg, rgba(110,168,254,0.95), rgba(177,151,252,0.95)); }
+
+    .badges{ display:flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .badges img{ height: 22px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); }
+
+    .list{ display:flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+    .repo{
+      padding: 12px; border-radius: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.10);
+    }
+    .t{ display:flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .repo a{ color: rgba(255,255,255,0.92); font-weight: 650; text-decoration: none; }
+    .repo a:hover{ text-decoration: underline; }
+    .desc{ color: var(--muted); font-size: 13px; margin-top: 6px; line-height: 1.35; }
+    .mini{ display:flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; color: var(--muted2); font-size: 12px; }
+    .mini span{ font-family: var(--mono); }
+
+    .langChart{ margin-top: 10px; display:flex; flex-direction: column; gap: 8px; }
+    .langRow{ display:flex; align-items:center; gap: 10px; }
+    .langRow .lname{ width: 130px; color: var(--muted); font-size: 13px; overflow:hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .langRow .lpct{ width: 58px; text-align:right; font-family: var(--mono); color: var(--muted2); font-size: 12px; }
+    .langRow .ltrack{ flex:1; height: 10px; border-radius: 999px; background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.10); overflow:hidden; }
+    .langRow .lfill{ height:100%; width:0%; background: linear-gradient(90deg, rgba(48,209,88,0.95), rgba(110,168,254,0.95)); }
+
+    .chips{ display:flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .chip{ padding: 6px 10px; border-radius: 999px; font-size: 12px; color: var(--muted); border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.05); }
+
+    .notice{
+      padding: 12px 12px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.06); color: var(--muted); font-size: 13px; line-height: 1.35; margin-top: 12px;
+    }
+    .notice strong{ color: rgba(255,255,255,0.9); }
+
+    .footer{ margin-top: 14px; color: rgba(255,255,255,0.45); font-size: 12px; display:flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+    .mono{ font-family: var(--mono); }
+    .hidden{ display:none !important; }
+
+    .spinner{
+      width: 18px; height: 18px; border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.22); border-top-color: rgba(255,255,255,0.85);
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .err{ border-color: rgba(255,69,58,0.30); background: rgba(255,69,58,0.12); color: rgba(255,255,255,0.88); }
+    code{ font-family: var(--mono); font-size: 12px; padding: 2px 6px; border-radius: 8px; background: rgba(0,0,0,0.28); border: 1px solid rgba(255,255,255,0.12); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <h1>GitHub Profile Analyzer</h1>
+        <p>Enter a GitHub username to get contribution stats, an Open Source Contribution Coefficient, badges, and role/tech suggestions.</p>
+      </div>
+
+      <div class="panel search">
+        <input id="username" placeholder="e.g. torvalds, gaearon, octocat" autocomplete="off" />
+        <button id="analyzeBtn" class="btn">Analyze</button>
+        <button id="demoBtn" class="btn secondary" title="Try a demo username">Demo</button>
+        <div id="loading" class="spinner hidden" aria-label="Loading"></div>
+      </div>
+    </header>
+
+    <div id="alert" class="notice hidden"></div>
+
+    <div class="grid">
+      <section class="panel card">
+        <h2>Overview</h2>
+        <div class="profile">
+          <div class="avatar"><img id="avatarImg" alt="avatar" src=""></div>
+          <div class="meta">
+            <div class="name">
+              <strong id="displayName">—</strong>
+              <span id="loginPill" class="pill hidden"></span>
+              <span id="modePill" class="pill hidden"></span>
+            </div>
+            <div class="bio" id="bioText">Enter a username and press Analyze.</div>
+            <div class="chips" id="profileChips"></div>
+          </div>
+        </div>
+
+        <div class="kpi">
+          <div class="tile"><div class="label">Public Repos</div><div class="value" id="k_publicRepos">—</div></div>
+          <div class="tile"><div class="label">Followers</div><div class="value" id="k_followers">—</div></div>
+          <div class="tile"><div class="label">Stars Received</div><div class="value" id="k_stars">—</div></div>
+          <div class="tile"><div class="label">Active Repos (90d)</div><div class="value" id="k_activeRepos">—</div></div>
+        </div>
+
+        <div class="notice hidden" id="tokenHint">
+          <strong>Tip:</strong> Configure <code>GITHUB_TOKEN</code> on the server to unlock accurate 365-day totals/streaks and “all-time commits”.
+        </div>
+
+        <div class="badges" id="badgeRow"></div>
+      </section>
+
+      <aside class="panel card">
+        <h2>Open Source Contribution Coefficient</h2>
+        <div class="gauge">
+          <div class="ring" id="ring">
+            <div class="inner">
+              <div class="num" id="coefNum">—</div>
+              <div class="sub" id="coefLevel">—</div>
+            </div>
+          </div>
+          <div style="min-width:0">
+            <div style="font-size:13px;color:var(--muted);line-height:1.35" id="coefText">
+              This score blends recent activity, collaboration, impact, consistency, and language diversity.
+            </div>
+            <div class="footer" style="margin-top:10px">
+              <span id="windowText" class="mono"></span>
+              <span id="generatedText" class="mono"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="bars" id="breakdownBars"></div>
+      </aside>
+    </div>
+
+    <div class="grid" style="margin-top:14px;">
+      <section class="panel card">
+        <h2>Languages</h2>
+        <div class="langChart" id="langChart"></div>
+        <div class="notice">Language diversity entropy: <span class="mono" id="diversityEntropy">—</span></div>
+      </section>
+
+      <section class="panel card">
+        <h2>Recommendations</h2>
+        <div id="tracksList" class="list"></div>
+        <div class="notice" style="margin-top:12px;">
+          <div><strong>Suggested company types</strong></div>
+          <div class="chips" id="companyTypes"></div>
+        </div>
+      </section>
+    </div>
+
+    <div class="grid" style="margin-top:14px;">
+      <section class="panel card">
+        <h2>Top repositories (by stars)</h2>
+        <div class="list" id="reposList"></div>
+      </section>
+
+      <section class="panel card">
+        <h2>Contribution stats</h2>
+        <div class="kpi" style="grid-template-columns: repeat(2, 1fr);">
+          <div class="tile"><div class="label">Total Contributions (365d)</div><div class="value" id="c_total">—</div></div>
+          <div class="tile"><div class="label">Commit Contributions (all-time)</div><div class="value" id="c_commitsAll">—</div></div>
+          <div class="tile"><div class="label">Active Days (365d)</div><div class="value" id="c_activeDays">—</div></div>
+          <div class="tile"><div class="label">PRs (365d)</div><div class="value" id="c_prs">—</div></div>
+          <div class="tile"><div class="label">Issues (365d)</div><div class="value" id="c_issues">—</div></div>
+          <div class="tile"><div class="label">Reviews (365d)</div><div class="value" id="c_reviews">—</div></div>
+          <div class="tile"><div class="label">Streak</div><div class="value" id="c_streak">—</div></div>
+          <div class="tile"><div class="label">Active Weeks (365d)</div><div class="value" id="c_activeWeeks">—</div></div>
+        </div>
+
+        <div class="notice hidden" id="restNote"></div>
+
+        <div class="notice" style="margin-top:12px;">
+          <div><strong>Top topics</strong></div>
+          <div class="chips" id="topicsChips"></div>
+        </div>
+      </section>
+    </div>
+
+    <div class="footer" style="margin-top:18px;">
+      <span>API: <code>/api/analyze</code></span>
+      <span>Built with Flask + GitHub APIs</span>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    function setAlert(msg, isError=false){
+      const el = $("alert");
+      if(!msg){
+        el.classList.add("hidden");
+        el.textContent = "";
+        el.classList.remove("err");
+        return;
+      }
+      el.classList.toggle("err", !!isError);
+      el.textContent = msg;
+      el.classList.remove("hidden");
+    }
+
+    function setLoading(on){
+      $("loading").classList.toggle("hidden", !on);
+      $("analyzeBtn").disabled = on;
+      $("demoBtn").disabled = on;
+      $("username").disabled = on;
+    }
+
+    function fmtNum(n){
+      if(n === null || n === undefined) return "—";
+      const x = Number(n);
+      if(Number.isNaN(x)) return "—";
+      return x.toLocaleString();
+    }
+
+    function pct(v){
+      const x = Math.max(0, Math.min(1, Number(v || 0)));
+      return Math.round(x * 100);
+    }
+
+    function setRing(score){
+      const ring = $("ring");
+      const deg = Math.round(Math.max(0, Math.min(100, score)) * 3.6);
+      let a = "rgba(255,69,58,0.95)";
+      if(score >= 70) a = "rgba(48,209,88,0.95)";
+      else if(score >= 50) a = "rgba(255,214,10,0.95)";
+      ring.style.background = `conic-gradient(${a} 0deg, ${a} ${deg}deg, rgba(255,255,255,0.10) ${deg}deg 360deg)`;
+    }
+
+    function barItem(label, value01){
+      const v = Math.max(0, Math.min(1, Number(value01 || 0)));
+      const wrap = document.createElement("div");
+      wrap.className = "bar";
+
+      const top = document.createElement("div");
+      top.className = "top";
+      top.innerHTML = `<span>${label}</span><span class="mono">${pct(v)}%</span>`;
+
+      const track = document.createElement("div");
+      track.className = "track";
+      const fill = document.createElement("div");
+      fill.className = "fill";
+      fill.style.width = `${pct(v)}%`;
+      track.appendChild(fill);
+
+      wrap.appendChild(top);
+      wrap.appendChild(track);
+      return wrap;
+    }
+
+    function clear(el){ while(el.firstChild) el.removeChild(el.firstChild); }
+
+    function addChip(el, text){
+      const c = document.createElement("span");
+      c.className = "chip";
+      c.textContent = text;
+      el.appendChild(c);
+    }
+
+    function renderProfile(data){
+      const p = data.profile || {};
+      const s = data.summary || {};
+
+      $("displayName").textContent = p.name ? p.name : (p.login || "—");
+      $("bioText").textContent = p.bio ? p.bio : "—";
+
+      const loginPill = $("loginPill");
+      loginPill.textContent = p.login ? `@${p.login}` : "";
+      loginPill.classList.toggle("hidden", !p.login);
+
+      const modePill = $("modePill");
+      modePill.textContent = (p.data_mode || "").toUpperCase();
+      modePill.classList.toggle("hidden", !p.data_mode);
+
+      if(p.login){
+        $("avatarImg").src = `https://github.com/${encodeURIComponent(p.login)}.png?size=120`;
+      }else{
+        $("avatarImg").src = "";
+      }
+
+      $("k_publicRepos").textContent = fmtNum(p.public_repos);
+      $("k_followers").textContent = fmtNum(p.followers);
+      $("k_stars").textContent = fmtNum(s.total_stars_received);
+      $("k_activeRepos").textContent = fmtNum(s.recently_active_repos_90d);
+
+      const chips = $("profileChips");
+      clear(chips);
+      if(p.location) addChip(chips, p.location);
+      if(p.company) addChip(chips, p.company.replace(/^@/, ""));
+      if(p.github_url) addChip(chips, "GitHub Profile");
+      if(p.website) addChip(chips, "Website");
+    }
+
+    function renderBadges(badges){
+      const row = $("badgeRow");
+      row.innerHTML = "";
+      (badges || []).forEach(b => {
+        const img = document.createElement("img");
+        img.src = b.url || "";
+        img.alt = `${b.label}: ${b.message}`;
+        img.title = img.alt;
+        row.appendChild(img);
+      });
+    }
+
+    function renderCoefficient(data){
+      const c = data.coefficient || {};
+      const score = Number(c.open_source_contribution_coefficient || 0);
+      $("coefNum").textContent = Number.isFinite(score) ? score.toFixed(2) : "—";
+      $("coefLevel").textContent = c.level || "—";
+      setRing(score);
+
+      const win = data.profile?.analysis_window;
+      $("windowText").textContent = win ? `Window: ${win.from} → ${win.to}` : "";
+
+      const gen = data.meta?.generated_at || "";
+      $("generatedText").textContent = gen ? `Generated: ${gen.slice(0, 19).replace("T"," ")}` : "";
+
+      const bars = $("breakdownBars");
+      bars.innerHTML = "";
+      const b = c.breakdown || {};
+      bars.appendChild(barItem("Activity", b.activity_norm));
+      bars.appendChild(barItem("Collaboration", b.collaboration_norm));
+      bars.appendChild(barItem("Impact (Stars)", b.impact_norm));
+      bars.appendChild(barItem("Consistency", b.consistency));
+      bars.appendChild(barItem("Language Diversity", b.diversity));
+
+      $("coefText").textContent = c.interpretation || "—";
+    }
+
+    function renderLanguages(data){
+      $("diversityEntropy").textContent = (typeof data.languages?.diversity_entropy === "number") ? data.languages.diversity_entropy.toFixed(4) : "—";
+      const chart = $("langChart");
+      chart.innerHTML = "";
+
+      const perc = data.languages?.percentages || {};
+      const rows = Object.entries(perc).slice(0, 10);
+
+      if(rows.length === 0){
+        const n = document.createElement("div");
+        n.className = "notice";
+        n.textContent = "No language data available.";
+        chart.appendChild(n);
+        return;
+      }
+
+      rows.forEach(([name, v]) => {
+        const row = document.createElement("div");
+        row.className = "langRow";
+
+        const n = document.createElement("div");
+        n.className = "lname";
+        n.title = name;
+        n.textContent = name;
+
+        const t = document.createElement("div");
+        t.className = "ltrack";
+        const f = document.createElement("div");
+        f.className = "lfill";
+        f.style.width = `${pct(v)}%`;
+        t.appendChild(f);
+
+        const p = document.createElement("div");
+        p.className = "lpct";
+        p.textContent = `${pct(v)}%`;
+
+        row.appendChild(n);
+        row.appendChild(t);
+        row.appendChild(p);
+        chart.appendChild(row);
+      });
+    }
+
+    function renderRepos(repos){
+      const el = $("reposList");
+      el.innerHTML = "";
+      (repos || []).forEach(r => {
+        const card = document.createElement("div");
+        card.className = "repo";
+
+        const title = document.createElement("div");
+        title.className = "t";
+
+        const a = document.createElement("a");
+        a.href = r.url || "#";
+        a.target = "_blank";
+        a.rel = "noreferrer";
+        a.textContent = r.name || "repo";
+
+        const right = document.createElement("div");
+        right.className = "pill";
+        right.textContent = `★ ${fmtNum(r.stars)} · ⑂ ${fmtNum(r.forks)}`;
+
+        title.appendChild(a);
+        title.appendChild(right);
+
+        const desc = document.createElement("div");
+        desc.className = "desc";
+        desc.textContent = r.description || "";
+
+        const mini = document.createElement("div");
+        mini.className = "mini";
+        const lang = r.primary_language ? `Lang: ${r.primary_language}` : "Lang: —";
+        const pushed = r.pushed_at ? `Pushed: ${String(r.pushed_at).slice(0, 10)}` : "Pushed: —";
+        mini.innerHTML = `<span>${lang}</span><span>${pushed}</span><span>Open issues: ${fmtNum(r.open_issues)}</span>`;
+
+        card.appendChild(title);
+        if(r.description) card.appendChild(desc);
+        card.appendChild(mini);
+
+        el.appendChild(card);
+      });
+
+      if((repos || []).length === 0){
+        const n = document.createElement("div");
+        n.className = "notice";
+        n.textContent = "No repositories returned.";
+        el.appendChild(n);
+      }
+    }
+
+    function renderRecommendations(data){
+      const tracks = data.recommendations?.recommended_tracks || [];
+      const list = $("tracksList");
+      list.innerHTML = "";
+
+      tracks.slice(0, 10).forEach(t => {
+        const card = document.createElement("div");
+        card.className = "repo";
+        const tr = document.createElement("div");
+        tr.className = "t";
+        tr.innerHTML = `<div style="font-weight:650">${t.track}</div><div class="pill">Suggestion</div>`;
+        const reason = document.createElement("div");
+        reason.className = "desc";
+        reason.textContent = t.reason || "";
+        card.appendChild(tr);
+        if(t.reason) card.appendChild(reason);
+        list.appendChild(card);
+      });
+
+      if(tracks.length === 0){
+        const n = document.createElement("div");
+        n.className = "notice";
+        n.textContent = "No recommendations available (insufficient language/topic data).";
+        list.appendChild(n);
+      }
+
+      const ct = data.recommendations?.suggested_company_types || [];
+      const chips = $("companyTypes");
+      clear(chips);
+      ct.slice(0, 10).forEach(x => addChip(chips, x));
+    }
+
+    function renderContrib(data){
+      const c = data.contributions || {};
+      const isRestLimited = (data.profile?.data_mode) === "rest";
+
+      $("c_total").textContent = (c.total_contributions === null || c.total_contributions === undefined) ? "—" : fmtNum(c.total_contributions);
+      $("c_commitsAll").textContent = (c.all_time_commit_contributions === null || c.all_time_commit_contributions === undefined) ? "—" : fmtNum(c.all_time_commit_contributions);
+      $("c_activeDays").textContent = (c.active_days !== undefined) ? `${fmtNum(c.active_days)} (${pct(c.active_days_ratio)}%)` : "—";
+      $("c_prs").textContent = (c.pull_requests !== undefined) ? fmtNum(c.pull_requests) : "—";
+      $("c_issues").textContent = (c.issues !== undefined) ? fmtNum(c.issues) : "—";
+      $("c_reviews").textContent = (c.reviews !== undefined) ? fmtNum(c.reviews) : "—";
+
+      let streakText = c.streak ? `${fmtNum(c.streak.max_streak_days)}d (current ${fmtNum(c.streak.current_streak_days)}d)` : "—";
+      if(c.streak_over_window && c.streak_window_years){
+        streakText += ` · Longest (${c.streak_window_years}y): ${fmtNum(c.streak_over_window.max_streak_days)}d`;
+      }
+      $("c_streak").textContent = streakText;
+
+      $("c_activeWeeks").textContent = (c.active_weeks !== undefined) ? `${fmtNum(c.active_weeks)} (${pct(c.active_weeks_ratio)}%)` : "—";
+
+      const restNote = $("restNote");
+      if(isRestLimited){
+        const note = c.note || "REST-limited mode: contribution totals are not available without a token.";
+        const types = c.event_type_counts ? Object.entries(c.event_type_counts).slice(0, 6) : [];
+        let details = "";
+        if(types.length){
+          details = " Top events: " + types.map(([k,v]) => `${k.replace("Event","")}: ${v}`).join(", ") + ".";
+        }
+        restNote.textContent = note + details;
+        restNote.classList.remove("hidden");
+      }else{
+        restNote.classList.add("hidden");
+        restNote.textContent = "";
+      }
+    }
+
+    function renderTopics(data){
+      const top = data.topics?.top || [];
+      const chips = $("topicsChips");
+      clear(chips);
+      top.slice(0, 16).forEach(([t, n]) => addChip(chips, `${t} · ${n}`));
+      if(top.length === 0) addChip(chips, "—");
+    }
+
+    function renderTokenHint(data){
+      const hint = $("tokenHint");
+      const tokenConfigured = !!(data.meta && data.meta.token_configured);
+      hint.classList.toggle("hidden", tokenConfigured);
+    }
+
+    function applyData(data){
+      renderProfile(data);
+      renderBadges(data.badges);
+      renderCoefficient(data);
+      renderLanguages(data);
+      renderRepos(data.top_repositories);
+      renderRecommendations(data);
+      renderContrib(data);
+      renderTopics(data);
+      renderTokenHint(data);
+    }
+
+    async function analyze(username){
+      if(!username) return;
+      setAlert("");
+      setLoading(true);
+
+      try{
+        const url = `/api/analyze?username=${encodeURIComponent(username)}`;
+        const resp = await fetch(url, { headers: { "Accept": "application/json" } });
+        const data = await resp.json().catch(() => ({}));
+
+        if(!resp.ok){
+          const msg = data?.error ? data.error : `Request failed (${resp.status})`;
+          setAlert(msg, true);
+          return;
+        }
+
+        applyData(data);
+        setAlert(data.cached ? "Loaded cached result." : "Analysis complete.");
+      }catch(e){
+        setAlert("Network error. Is the Flask server running?", true);
+      }finally{
+        setLoading(false);
+      }
+    }
+
+    $("analyzeBtn").addEventListener("click", () => analyze($("username").value.trim()));
+    $("demoBtn").addEventListener("click", () => { $("username").value = "octocat"; analyze("octocat"); });
+    $("username").addEventListener("keydown", (e) => { if(e.key === "Enter"){ e.preventDefault(); $("analyzeBtn").click(); } });
+
+    (function init(){
+      const params = new URLSearchParams(window.location.search);
+      const u = (params.get("u") || "").trim();
+      if(u){ $("username").value = u; analyze(u); }
+    })();
+  </script>
+</body>
+</html>
