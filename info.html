@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Open Source Interest Analyzer — GitHub Profile Insights</title>
+  <meta name="description" content="Analyze GitHub activity to understand interests, open-source engagement, and best-fit tech tracks — useful for professors and hiring managers." />
+  <style>
+    :root{
+      --bg: #0b1020;
+      --panel: rgba(255,255,255,0.06);
+      --panel2: rgba(255,255,255,0.09);
+      --text: rgba(255,255,255,0.92);
+      --muted: rgba(255,255,255,0.72);
+      --muted2: rgba(255,255,255,0.55);
+      --border: rgba(255,255,255,0.12);
+      --accent: #6ea8fe;
+      --accent2: #b197fc;
+      --shadow: 0 18px 40px rgba(0,0,0,0.35);
+      --radius: 18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    }
+
+    *{ box-sizing: border-box; }
+    body{
+      margin:0;
+      font-family: var(--sans);
+      color: var(--text);
+      background:
+        radial-gradient(1200px 600px at 20% -10%, rgba(110,168,254,0.25), transparent 55%),
+        radial-gradient(900px 500px at 90% 0%, rgba(177,151,252,0.22), transparent 50%),
+        radial-gradient(1200px 900px at 30% 120%, rgba(48,209,88,0.12), transparent 55%),
+        var(--bg);
+      min-height: 100vh;
+    }
+
+    a{ color: inherit; }
+    .wrap{ max-width: 1120px; margin: 0 auto; padding: 28px 18px 72px; }
+
+    .top{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 22px;
+    }
+    .logo{
+      display:flex;
+      gap: 10px;
+      align-items:center;
+      user-select:none;
+    }
+    .mark{
+      width: 38px;
+      height: 38px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(110,168,254,0.9), rgba(177,151,252,0.85));
+      border: 1px solid rgba(255,255,255,0.18);
+      box-shadow: 0 14px 28px rgba(0,0,0,0.25);
+    }
+    .logo .t{
+      display:flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .logo .t strong{ font-size: 14px; letter-spacing: .2px; }
+    .logo .t span{ font-size: 12px; color: var(--muted); }
+
+    .nav{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items:center;
+    }
+    .nav a{
+      text-decoration:none;
+      font-size: 13px;
+      color: var(--muted);
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.04);
+    }
+    .nav a:hover{ background: rgba(255,255,255,0.07); color: var(--text); }
+
+    .panel{
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero{
+      padding: 22px;
+      display:grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 16px;
+      align-items: start;
+    }
+    @media (max-width: 920px){ .hero{ grid-template-columns: 1fr; } }
+
+    h1{
+      margin:0;
+      font-size: 32px;
+      letter-spacing: 0.2px;
+      line-height: 1.1;
+    }
+    .sub{
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.45;
+      max-width: 62ch;
+    }
+    .cta{
+      margin-top: 16px;
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items:center;
+    }
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: linear-gradient(180deg, rgba(110,168,254,0.35), rgba(110,168,254,0.20));
+      color: var(--text);
+      cursor:pointer;
+      text-decoration:none;
+      font-weight: 650;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+    .btn.secondary{
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+    }
+    .btn:hover{ filter: brightness(1.06); }
+
+    .heroCard{
+      padding: 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.05);
+    }
+    .heroCard h3{
+      margin: 0 0 8px 0;
+      font-size: 13px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.25px;
+    }
+    .statGrid{
+      display:grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .tile{
+      padding: 12px;
+      border-radius: 14px;
+      background: rgba(0,0,0,0.22);
+      border: 1px solid rgba(255,255,255,0.10);
+    }
+    .tile .k{ font-size: 12px; color: var(--muted2); margin-bottom: 6px; }
+    .tile .v{ font-family: var(--mono); font-size: 16px; }
+
+    section{ margin-top: 16px; }
+    .section{ padding: 18px; }
+    .section h2{
+      margin:0 0 8px 0;
+      font-size: 15px;
+      color: rgba(255,255,255,0.86);
+      letter-spacing: 0.2px;
+    }
+    .section p{
+      margin:0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 920px){ .grid2{ grid-template-columns: 1fr; } }
+
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.05);
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .tag b{ color: rgba(255,255,255,0.9); }
+
+    .list{
+      margin-top: 10px;
+      display:flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .item{
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.05);
+    }
+    .item strong{ display:block; margin-bottom: 6px; }
+    .item span{ color: var(--muted); font-size: 13px; line-height: 1.45; }
+
+    .steps{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 12px;
+    }
+    @media (max-width: 920px){ .steps{ grid-template-columns: 1fr; } }
+
+    .step{
+      padding: 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.05);
+    }
+    .step .n{
+      width: 28px;
+      height: 28px;
+      border-radius: 10px;
+      display:grid;
+      place-items:center;
+      font-family: var(--mono);
+      font-weight: 700;
+      background: rgba(110,168,254,0.20);
+      border: 1px solid rgba(110,168,254,0.35);
+      margin-bottom: 10px;
+    }
+    .step h3{
+      margin:0 0 8px 0;
+      font-size: 14px;
+      letter-spacing: 0.2px;
+    }
+    .step p{
+      margin:0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    details{
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.05);
+      border-radius: 14px;
+      padding: 12px 12px;
+    }
+    details summary{
+      cursor:pointer;
+      font-weight: 650;
+      color: rgba(255,255,255,0.86);
+    }
+    details p{ margin-top: 10px; }
+
+    footer{
+      margin-top: 16px;
+      padding: 18px;
+      display:flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      color: rgba(255,255,255,0.55);
+      font-size: 12px;
+    }
+    .miniLink{
+      color: rgba(255,255,255,0.70);
+      text-decoration:none;
+      border-bottom: 1px dashed rgba(255,255,255,0.25);
+    }
+    .miniLink:hover{ color: var(--text); border-bottom-color: rgba(255,255,255,0.55); }
+
+    .note{
+      margin-top: 10px;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(0,0,0,0.22);
+      color: rgba(255,255,255,0.74);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .note b{ color: rgba(255,255,255,0.9); }
+    code{
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 2px 6px;
+      border-radius: 8px;
+      background: rgba(0,0,0,0.28);
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div class="logo">
+        <div class="mark" aria-hidden="true"></div>
+        <div class="t">
+          <strong>Open Source Interest Analyzer</strong> <span style="font-size:11px;padding:4px 8px;margin-left:6px;border-radius:999px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,214,10,0.15);color:#ffd60a;">In Development</span>
+          <span>GitHub-based student interest & progress insights</span>
+        </div>
+      </div>
+      <nav class="nav" aria-label="Primary">
+        <a href="#problem">Problem</a>
+        <a href="#solution">Solution</a>
+        <a href="#how">How it works</a>
+        <a href="#features">Features</a>
+        <a href="#hiring">Hiring</a>
+        <a href="#ethics">Fair use</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+    </div>
+
+    <div class="panel hero" id="top">
+      <div>
+        <h1>Understand student interests with real open‑source signals.</h1>
+        <div class="sub">
+          This web app analyzes a student’s public GitHub activity (repos, languages, topics, and contribution patterns)
+          to compute an <b>Open Source Contribution Coefficient</b> and recommend the most suitable tech tracks.
+          It helps professors guide students toward focused preparation aligned with their interests and market demand — and helps hiring managers quickly understand a candidate’s real engineering signals.
+        </div>
+
+        <div class="cta">
+          <a class="btn" href="/" title="Open the analyzer app">Open the Analyzer</a>
+          <a class="btn secondary" href="#how" title="See how it works">See how it works</a>
+        </div>
+
+        <div class="note"><b>Status:</b> This project is currently <b>in active development</b>. Features, scoring logic, and recommendations may evolve based on feedback.<br/><br/>
+          <b>Goal:</b> Reduce scattershot preparation, encourage meaningful open-source contributions, and help professors track growth over time—
+          while keeping guidance transparent and student-friendly.
+        </div>
+      </div>
+
+      <div class="heroCard">
+        <h3>What the app outputs</h3>
+        <div class="statGrid">
+          <div class="tile"><div class="k">Contribution coefficient</div><div class="v">0–100</div></div>
+          <div class="tile"><div class="k">365‑day activity</div><div class="v">Streaks</div></div>
+          <div class="tile"><div class="k">Top languages</div><div class="v">+ % split</div></div>
+          <div class="tile"><div class="k">Best‑fit tracks</div><div class="v">Recommendations</div></div>
+        </div>
+        <div class="note" style="margin-top:12px;">
+          Uses GitHub APIs to analyze <b>public</b> signals like contribution patterns, language usage, and repo topics.
+        </div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <section class="panel section" id="problem">
+        <div class="tag"><b>Problem statement</b></div>
+        <h2>Students often prepare for “every company” and lose valuable time.</h2>
+        <p>
+          Students frequently spread their effort across multiple unrelated tech stacks, interview formats, and domains.
+          This leads to shallow preparation, burnout, and unclear direction—especially when they haven’t identified what they genuinely enjoy building.
+        </p>
+
+        <div class="list">
+          <div class="item">
+            <strong>Over-preparation across stacks</strong>
+            <span>Students try to cover everything (frontend, backend, ML, DevOps) at once and end up mastering nothing.</span>
+          </div>
+          <div class="item">
+            <strong>Weak alignment with interest</strong>
+            <span>Without evidence of hands-on preference, recommendations become generic and students feel lost.</span>
+          </div>
+          <div class="item">
+            <strong>Hard to track real progress</strong>
+            <span>Courses show grades—but not consistent building habits, collaboration, or long-term engineering interest.</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel section" id="solution">
+        <div class="tag"><b>Solution</b></div>
+        <h2>Use open‑source contributions to reveal interest + focus preparation.</h2>
+        <p>
+          The app transforms GitHub activity into understandable insights:
+          it highlights a student’s strongest domains, consistent work patterns, collaboration signals, and tech-stack fit.
+          Professors can then guide students toward companies and roles that match the student’s real strengths and interests.
+        </p>
+
+        <div class="list">
+          <div class="item">
+            <strong>Interest discovery</strong>
+            <span>Dominant languages, topics, and project types point to real preferences (e.g., React, ML, Android, DevOps).</span>
+          </div>
+          <div class="item">
+            <strong>Focused preparation</strong>
+            <span>Students get a clear set of recommended tracks and can avoid preparing blindly for everything.</span>
+          </div>
+          <div class="item">
+            <strong>Open‑source motivation</strong>
+            <span>Students are encouraged to contribute to projects aligned with interest and market demand—and track progress over time.</span>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <section class="panel section" id="how">
+      <h2>How it works</h2>
+      <p>
+        Simple workflow for professors and students. No complex setup needed—just a GitHub username.
+      </p>
+
+      <div class="steps">
+        <div class="step">
+          <div class="n">1</div>
+          <h3>Enter a GitHub username</h3>
+          <p>
+            The student provides their GitHub username. The app fetches public data using GitHub APIs
+            (repos, languages, topics, and recent contribution patterns).
+          </p>
+        </div>
+        <div class="step">
+          <div class="n">2</div>
+          <h3>Analyze contributions & collaboration</h3>
+          <p>
+            The app computes an Open Source Contribution Coefficient using activity, collaboration (PRs/issues/reviews),
+            impact (stars), and consistency (streaks + active weeks).
+          </p>
+        </div>
+        <div class="step">
+          <div class="n">3</div>
+          <h3>Recommend tracks and next steps</h3>
+          <p>
+            The output highlights best-fit tech tracks, suggested company types, top repositories, and a clear action plan
+            to build a stronger portfolio.
+          </p>
+        </div>
+      </div>
+
+      <div class="note" style="margin-top:12px;">
+        <b>Example:</b> If a student’s top signals are <code>TypeScript</code> + <code>react</code> topics + consistent weekly activity,
+        the app recommends a frontend/full-stack track and suggests focusing on product engineering stacks.
+      </div>
+    </section>
+
+    <section class="panel section" id="features">
+      <h2>What professors (and mentors) can do with it</h2>
+      <p>Use GitHub-based signals to guide students, personalize mentorship, and track progress.</p>
+
+      <div class="list">
+        <div class="item">
+          <strong>Shareable candidate snapshots</strong>
+          <span>Generate a clean, structured summary that can be used to guide mentorship or support hiring discussions.</span>
+        </div>
+        <div class="item">
+          <strong>Sort students by interest</strong>
+          <span>Group students by dominant tracks: Frontend, Backend, Mobile, DevOps, ML, Systems, etc.</span>
+        </div>
+        <div class="item">
+          <strong>Recommend tech stacks for targeted preparation</strong>
+          <span>Suggest the right stack based on what students already build—then deepen their expertise for that direction.</span>
+        </div>
+        <div class="item">
+          <strong>Encourage open-source growth</strong>
+          <span>Students get nudged to contribute consistently to relevant repositories and build a visible engineering footprint.</span>
+        </div>
+        <div class="item">
+          <strong>Track progress over time</strong>
+          <span>Use coefficient changes, streak growth, and repo quality improvements as ongoing progress indicators.</span>
+        </div>
+      </div>
+    </section>
+
+    
+    <section class="panel section" id="hiring">
+      <h2>How it helps hiring managers</h2>
+      <p>
+        Hiring teams can use the same GitHub-based signals to get fast, structured insights into a candidate’s practical strengths—
+        beyond a résumé bullet list.
+      </p>
+
+      <div class="list">
+        <div class="item">
+          <strong>Quick technical signal summary</strong>
+          <span>See what a candidate actually ships: top languages, project types, and recurring themes via topics and repo patterns.</span>
+        </div>
+        <div class="item">
+          <strong>Consistency & collaboration indicators</strong>
+          <span>Surface streaks, active weeks, PRs, issues, and reviews to understand sustained effort and teamwork signals.</span>
+        </div>
+        <div class="item">
+          <strong>Role-fit and stack alignment</strong>
+          <span>Use track recommendations to route candidates to the right interviews (frontend, backend, mobile, ML, DevOps, systems).</span>
+        </div>
+        <div class="item">
+          <strong>Conversation starters for interviews</strong>
+          <span>Top repositories and contribution patterns make it easier to ask specific, fair, and relevant questions.</span>
+        </div>
+      </div>
+
+      <div class="note" style="margin-top:12px;">
+        <b>Note:</b> The analyzer is best used as a <b>signal amplifier</b>—combine it with interviews, projects, and context.
+      </div>
+    </section>
+
+
+    <section class="panel section" id="ethics">
+      <h2>Fair use & responsible guidance</h2>
+      <p>
+        This tool is designed for guidance and mentorship. It works best when used transparently and with student consent.
+      </p>
+      <div class="list">
+        <div class="item">
+          <strong>Public data only</strong>
+          <span>The analyzer focuses on public GitHub signals. Students can opt out by not providing a username.</span>
+        </div>
+        <div class="item">
+          <strong>Not a grading tool</strong>
+          <span>Use insights to guide learning paths—not to judge or penalize. Context matters (internships, exams, personal constraints).</span>
+        </div>
+        <div class="item">
+          <strong>Encourage healthy contributions</strong>
+          <span>Promote meaningful, sustainable open-source work—quality over quantity.</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel section" id="faq">
+      <h2>FAQ</h2>
+      <div class="list">
+        <details>
+          <summary>Does the app require student login?</summary>
+          <p>
+            No. The analyzer can run using a GitHub username and public GitHub API data. If you later add login,
+            you can implement OAuth/GitHub App authorization.
+          </p>
+        </details>
+        <details>
+          <summary>What does the Open Source Contribution Coefficient represent?</summary>
+          <p>
+            It’s a composite score (0–100) combining contribution activity, collaboration signals, repo impact, consistency,
+            and language diversity to provide a high-level view of open-source engagement.
+          </p>
+        </details>
+        <details>
+          <summary>Can this replace mentoring?</summary>
+          <p>
+            No—think of it as a starting point. It helps professors ask better questions, identify strong directions faster,
+            and encourage students with measurable progress signals.
+          </p>
+        </details>
+        <details>
+          <summary>What if a student is new to GitHub?</summary>
+          <p>
+            That’s okay. The tool can highlight early signals and suggest beginner-friendly contribution paths aligned with their interests.
+          </p>
+        </details>
+      </div>
+    </section>
+
+    <footer class="panel">
+      <div>
+        <div><b style="color:rgba(255,255,255,0.86)">Open Source Interest Analyzer</b></div>
+        <div style="margin-top:6px">Built with GitHub APIs · Designed for mentorship & guidance</div>
+      </div>
+      <div>
+        <div>Contact: <a class="miniLink" href="mailto:jatin100198@gmail.com">jatin100198@gmail.com</a></div>
+        <div style="margin-top:6px">© <span id="year"></span> · Your Project Name</div>
+      </div>
+      <div style="margin-top:10px;font-size:11px;color:rgba(255,255,255,0.55)">
+        Project status: <b>In development</b> · APIs, metrics, and UI subject to change
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener("click", (e) => {
+        const id = a.getAttribute("href");
+        const el = document.querySelector(id);
+        if(!el) return;
+        e.preventDefault();
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    });
+  </script>
+</body>
+</html>
